@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { useCallback, useEffect, useRef, useState } from "react"
 
-const sampleSize = 3
+const sampleSize = 10
 const audioContext = new window.AudioContext()
 
 export function App() {
@@ -46,7 +46,7 @@ export function App() {
       lastEmittedRef.current = performance.now()
 
       if (i < sampleSize - 1)
-        await new Promise((resolve) => setTimeout(resolve, 2000))
+        await new Promise((resolve) => setTimeout(resolve, 1000))
     }
 
     setIsSampling(false)
