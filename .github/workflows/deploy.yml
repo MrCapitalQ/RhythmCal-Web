@@ -31,6 +31,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # Update base path for GitHub Pages deployment
+      - name: Set base path
+        run: |
+          # update vite.config.ts base
+          sed -i "s|base: \"/\"|base: \"/RhythmCal-Web/\"|" vite.config.ts
+          # update BrowserRouter basename
+          # sed -i "s|basename=\"/\"|basename=\"/RhythmCal-Web\"|" src/App.tsx
+
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
