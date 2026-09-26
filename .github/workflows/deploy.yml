@@ -36,7 +36,6 @@ jobs:
         run: |
           # update vite.config.ts base
           sed -i "s|base: \"/\"|base: \"/RhythmCal-Web/\"|" vite.config.ts
-          cat vite.config.ts
           # update BrowserRouter basename
           # sed -i "s|basename=\"/\"|basename=\"/RhythmCal-Web\"|" src/App.tsx
 
