@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button"
 import { useCallback, useEffect, useRef, useState } from "react"
 
+const sampleDelayMs = 200
 const warmUps = 2
 const sampleSize = 10
+const beepDurationMs = 100
 const audioContext = new window.AudioContext()
 
 export function App() {
@@ -26,12 +28,12 @@ export function App() {
     oscillator.frequency.value = 1000
     oscillator.connect(audioContext.destination)
 
-    const startAudioTime = audioContext.currentTime
+    const startAudioTime = audioContext.currentTime + sampleDelayMs / 1000
 
-    oscillator.start(startAudioTime + 0.2)
-    oscillator.stop(startAudioTime + 0.3)
+    oscillator.start(startAudioTime)
+    oscillator.stop(startAudioTime + beepDurationMs / 1000)
 
-    return performance.now() + 200
+    return performance.now() + sampleDelayMs
   }
 
   const startAudioTest = useCallback(async () => {
