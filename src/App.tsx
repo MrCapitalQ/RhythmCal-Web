@@ -20,27 +20,29 @@ function delayWithJitter(): Promise<void> {
 }
 
 export function App() {
-  const [isSampling, setIsSampling] = useState<boolean>(false)
+  const [isVideoSampling, setIsVideoSampling] = useState<boolean>(false)
+  const [isAudioSampling, setIsAudioSampling] = useState<boolean>(false)
   const [readings, setReadings] = useState<number[]>([])
-  const [result, setResult] = useState<number | undefined>(undefined)
+  const [videoResult, setVideoResult] = useState<number | undefined>(undefined)
+  const [audioResult, setAudioResult] = useState<number | undefined>(undefined)
   const [isOverlayVisible, setIsOverlayVisible] = useState<boolean>(false)
-  const samplingtTypeRef = useRef<"audio" | "video" | undefined>(undefined)
   const lastEmittedRef = useRef<number | undefined>(undefined)
+  const readingsRef = useRef<number[]>([])
 
   const handleKeyDown = (event: { key: string; timeStamp: number }) => {
-    const samplingType = samplingtTypeRef.current
     const lastEmitted = lastEmittedRef.current
     if (lastEmitted === undefined) return
 
     if (
-      !samplingType ||
-      (samplingType == "video" && event.key !== "F13") ||
-      (samplingType == "audio" && event.key !== "F14")
+      !(isVideoSampling && event.key === "F13") &&
+      !(isAudioSampling && event.key === "F14")
     )
       return
 
     lastEmittedRef.current = undefined
-    setReadings((prev) => [...prev, event.timeStamp - lastEmitted])
+    const next = [...readingsRef.current, event.timeStamp - lastEmitted]
+    readingsRef.current = next
+    setReadings(next)
   }
 
   const showFlash = (): number => {
@@ -73,13 +75,13 @@ export function App() {
   }
 
   const startVideoTest = useCallback(async () => {
-    if (isSampling) return
+    if (isVideoSampling) return
 
-    samplingtTypeRef.current = "video"
     lastEmittedRef.current = undefined
+    readingsRef.current = []
     setReadings([])
-    setResult(undefined)
-    setIsSampling(true)
+    setVideoResult(undefined)
+    setIsVideoSampling(true)
 
     try {
       for (let i = 0; i < warmUps + sampleSize; i++) {
@@ -89,22 +91,26 @@ export function App() {
 
         await delayWithJitter()
       }
+
+      var readings = readingsRef.current
+      const sum = readings.reduce((acc, val) => acc + val, 0)
+      const result = Math.round(sum / readings.length)
+      setVideoResult(result)
     } catch (err) {
       alert(`Failed to run test: ${err}`)
     }
 
-    setIsSampling(false)
-    samplingtTypeRef.current = undefined
-  }, [isSampling])
+    setIsVideoSampling(false)
+  }, [isVideoSampling])
 
   const startAudioTest = useCallback(async () => {
-    if (isSampling) return
+    if (isAudioSampling) return
 
-    samplingtTypeRef.current = "audio"
     lastEmittedRef.current = undefined
+    readingsRef.current = []
     setReadings([])
-    setResult(undefined)
-    setIsSampling(true)
+    setAudioResult(undefined)
+    setIsAudioSampling(true)
 
     try {
       for (let i = 0; i < warmUps + sampleSize; i++) {
@@ -114,25 +120,30 @@ export function App() {
 
         await delayWithJitter()
       }
+
+      var readings = readingsRef.current
+      const sum = readings.reduce((acc, val) => acc + val, 0)
+      const result = Math.round(sum / readings.length)
+      setAudioResult(result)
     } catch (err) {
       alert(`Failed to run test: ${err}`)
     }
 
-    setIsSampling(false)
-    samplingtTypeRef.current = undefined
-  }, [isSampling])
+    setIsAudioSampling(false)
+  }, [isAudioSampling])
+
+  async function startTest() {
+    setVideoResult(undefined)
+    setAudioResult(undefined)
+
+    await startVideoTest()
+    await startAudioTest()
+  }
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [])
-
-  useEffect(() => {
-    if (readings.length === 0 || isSampling) return
-
-    const sum = readings.reduce((acc, val) => acc + val, 0)
-    setResult(Math.round(sum / readings.length))
-  }, [isSampling])
+  }, [isVideoSampling, isAudioSampling])
 
   return (
     <>
@@ -141,21 +152,18 @@ export function App() {
           <div>
             <Button
               className="mt-2"
-              onClick={startVideoTest}
-              disabled={isSampling}
+              onClick={startTest}
+              disabled={isVideoSampling || isAudioSampling}
             >
-              Test Video Latency
-            </Button>
-            <Button
-              className="mt-2"
-              onClick={startAudioTest}
-              disabled={isSampling}
-            >
-              Test Audio Latency
+              Start
             </Button>
           </div>
-          {isSampling && <Progress value={readings.length} max={sampleSize} />}
-          {result && <div>Result: {result}</div>}
+          {isVideoSampling ||
+            (isAudioSampling && (
+              <Progress value={readings.length} max={sampleSize} />
+            ))}
+          {videoResult && <div>Video Result: {videoResult}</div>}
+          {audioResult && <div>Audio Result: {audioResult}</div>}
           <div>
             <ul>
               {readings.map((reading, index) => (
