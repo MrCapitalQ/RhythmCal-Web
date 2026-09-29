@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { Progress } from "./components/ui/progress"
 
 const samplingInterval = 1000
 const samplingIntervalJitter = 50
@@ -153,6 +154,7 @@ export function App() {
               Test Audio Latency
             </Button>
           </div>
+          {isSampling && <Progress value={readings.length} max={sampleSize} />}
           {result && <div>Result: {result}</div>}
           <div>
             <ul>
