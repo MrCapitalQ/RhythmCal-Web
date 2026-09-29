@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 const samplingInterval = 1000
+const samplingIntervalJitter = 50
 const sampleDelayMs = 0
 const warmUps = 2
 const sampleSize = 15
@@ -9,13 +10,22 @@ const flashDurationMs = 100
 const beepDurationMs = 100
 const audioContext = new window.AudioContext()
 
+function delayWithJitter(): Promise<void> {
+  const jitterOffset =
+    Math.floor(Math.random() * samplingIntervalJitter) -
+    Math.floor(samplingIntervalJitter / 2)
+  const delay = samplingInterval + jitterOffset
+  console.log(delay)
+  return new Promise((resolve) => setTimeout(resolve, delay))
+}
+
 export function App() {
   const [isSampling, setIsSampling] = useState<boolean>(false)
   const [readings, setReadings] = useState<number[]>([])
   const [result, setResult] = useState<number | undefined>(undefined)
+  const [isOverlayVisible, setIsOverlayVisible] = useState<boolean>(false)
   const samplingtTypeRef = useRef<"audio" | "video" | undefined>(undefined)
   const lastEmittedRef = useRef<number | undefined>(undefined)
-  const flashOverlayRef = useRef<HTMLDivElement>(null)
 
   const handleKeyDown = (event: { key: string; timeStamp: number }) => {
     const samplingType = samplingtTypeRef.current
@@ -38,17 +48,12 @@ export function App() {
     oscillator.frequency.value = 1000
     oscillator.connect(audioContext.destination)
 
-    const flashOverlay: any = flashOverlayRef.current
-    if (!flashOverlay) {
-      throw "Flash overlay element not found."
-    }
-
     setTimeout(() => {
-      flashOverlay.style.display = "block"
+      setIsOverlayVisible(true)
     }, sampleDelayMs)
 
     setTimeout(() => {
-      flashOverlay.style.display = "none"
+      setIsOverlayVisible(false)
     }, sampleDelayMs + flashDurationMs)
 
     return performance.now() + sampleDelayMs
@@ -82,7 +87,7 @@ export function App() {
 
         if (i > warmUps - 1) lastEmittedRef.current = flashTimestamp
 
-        await new Promise((resolve) => setTimeout(resolve, samplingInterval))
+        await delayWithJitter()
       }
     } catch (err) {
       alert(`Failed to run test: ${err}`)
@@ -107,7 +112,7 @@ export function App() {
 
         if (i > warmUps - 1) lastEmittedRef.current = beepTimestamp
 
-        await new Promise((resolve) => setTimeout(resolve, samplingInterval))
+        await delayWithJitter()
       }
     } catch (err) {
       alert(`Failed to run test: ${err}`)
@@ -152,8 +157,8 @@ export function App() {
         </div>
       </div>
       <div
-        ref={flashOverlayRef}
-        className="absolute top-0 right-0 bottom-0 left-0 hidden bg-white"
+        className="absolute top-0 right-0 bottom-0 left-0 bg-white"
+        style={{ display: isOverlayVisible ? "block" : "none" }}
       ></div>
     </>
   )
