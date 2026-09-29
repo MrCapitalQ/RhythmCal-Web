@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button"
 import { useCallback, useEffect, useRef, useState } from "react"
 
-const sampleDelayMs = 200
+const samplingInterval = 1000
+const sampleDelayMs = 0
 const warmUps = 2
-const sampleSize = 10
-const flashDurationMs = 250
+const sampleSize = 15
+const flashDurationMs = 100
 const beepDurationMs = 100
 const audioContext = new window.AudioContext()
 
@@ -38,15 +39,17 @@ export function App() {
     oscillator.connect(audioContext.destination)
 
     const flashOverlay: any = flashOverlayRef.current
-    if (flashOverlay) {
-      setTimeout(() => {
-        flashOverlay.style.display = "block"
-      }, sampleDelayMs)
-
-      setTimeout(() => {
-        flashOverlay.style.display = "none"
-      }, sampleDelayMs + flashDurationMs)
+    if (!flashOverlay) {
+      throw "Flash overlay element not found."
     }
+
+    setTimeout(() => {
+      flashOverlay.style.display = "block"
+    }, sampleDelayMs)
+
+    setTimeout(() => {
+      flashOverlay.style.display = "none"
+    }, sampleDelayMs + flashDurationMs)
 
     return performance.now() + sampleDelayMs
   }
@@ -73,12 +76,16 @@ export function App() {
     setResult(undefined)
     setIsSampling(true)
 
-    for (let i = 0; i < warmUps + sampleSize; i++) {
-      const flashTimestamp = showFlash()
+    try {
+      for (let i = 0; i < warmUps + sampleSize; i++) {
+        const flashTimestamp = showFlash()
 
-      if (i > warmUps - 1) lastEmittedRef.current = flashTimestamp
+        if (i > warmUps - 1) lastEmittedRef.current = flashTimestamp
 
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, samplingInterval))
+      }
+    } catch (err) {
+      alert(`Failed to run test: ${err}`)
     }
 
     setIsSampling(false)
@@ -94,12 +101,16 @@ export function App() {
     setResult(undefined)
     setIsSampling(true)
 
-    for (let i = 0; i < warmUps + sampleSize; i++) {
-      const beepTimestamp = playBeep()
+    try {
+      for (let i = 0; i < warmUps + sampleSize; i++) {
+        const beepTimestamp = playBeep()
 
-      if (i > warmUps - 1) lastEmittedRef.current = beepTimestamp
+        if (i > warmUps - 1) lastEmittedRef.current = beepTimestamp
 
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, samplingInterval))
+      }
+    } catch (err) {
+      alert(`Failed to run test: ${err}`)
     }
 
     setIsSampling(false)
