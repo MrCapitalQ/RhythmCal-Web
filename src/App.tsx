@@ -15,7 +15,6 @@ function delayWithJitter(): Promise<void> {
     Math.floor(Math.random() * samplingIntervalJitter) -
     Math.floor(samplingIntervalJitter / 2)
   const delay = samplingInterval + jitterOffset
-  console.log(delay)
   return new Promise((resolve) => setTimeout(resolve, delay))
 }
 
@@ -139,10 +138,18 @@ export function App() {
       <div className="flex min-h-svh p-6">
         <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
           <div>
-            <Button className="mt-2" onClick={startVideoTest}>
+            <Button
+              className="mt-2"
+              onClick={startVideoTest}
+              disabled={isSampling}
+            >
               Test Video Latency
             </Button>
-            <Button className="mt-2" onClick={startAudioTest}>
+            <Button
+              className="mt-2"
+              onClick={startAudioTest}
+              disabled={isSampling}
+            >
               Test Audio Latency
             </Button>
           </div>
