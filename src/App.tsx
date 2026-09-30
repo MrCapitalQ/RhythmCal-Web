@@ -173,21 +173,31 @@ export function App() {
   return (
     <>
       <div className="mx-auto flex max-w-xl flex-col gap-4 p-6">
-        <Button className="mt-2" onClick={startTest}>
-          Start
-        </Button>
+        {currentState === "Idle" && (
+          <Button className="mt-2" onClick={startTest}>
+            Start
+          </Button>
+        )}
 
         {currentState === "VideoStarting" && (
-          <div>Video test is starting! Get ready!</div>
+          <div className="text-center">Video test is starting! Get ready!</div>
         )}
         {currentState === "Video" && (
-          <Progress value={videoReadings.length} max={sampleSize} />
+          <Progress
+            className="[&>[data-slot='progress-track']]:h-4"
+            value={videoReadings.length}
+            max={sampleSize}
+          />
         )}
         {currentState === "AudioStarting" && (
-          <div>Audio test is starting! Get ready!</div>
+          <div className="text-center">Audio test is starting! Get ready!</div>
         )}
         {currentState === "Audio" && (
-          <Progress value={audioReadings.length} max={sampleSize} />
+          <Progress
+            className="[&>[data-slot='progress-track']]:h-4"
+            value={audioReadings.length}
+            max={sampleSize}
+          />
         )}
         <div className="grid grid-cols-2 gap-x-2 gap-y-8">
           <div className="text-center">
@@ -234,6 +244,10 @@ export function App() {
         </div>
       </div>
 
+      <div
+        className="absolute top-0 right-0 bottom-0 left-0 bg-black/50"
+        style={{ display: currentState === "Video" ? "block" : "none" }}
+      />
       <div
         className="absolute top-0 right-0 bottom-0 left-0 bg-white"
         style={{ display: isOverlayVisible ? "block" : "none" }}
