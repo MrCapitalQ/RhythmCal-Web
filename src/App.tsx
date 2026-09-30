@@ -19,9 +19,11 @@ function delayWithJitter(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, delay))
 }
 
+type TestingState =
+  "Idle" | "VideoStarting" | "Video" | "AudioStarting" | "Audio"
+
 export function App() {
-  const [isVideoTesting, setIsVideoTesting] = useState<boolean>(false)
-  const [isAudioTesting, setIsAudioTesting] = useState<boolean>(false)
+  const [currentState, setCurrentState] = useState<TestingState>("Idle")
   const [videoReadings, setVideoReadings] = useState<number[]>([])
   const [audioReadings, setAudioReadings] = useState<number[]>([])
   const [videoResult, setVideoResult] = useState<number | undefined>(undefined)
@@ -34,16 +36,17 @@ export function App() {
     if (lastEmitted === undefined) return
 
     if (
-      !(isVideoTesting && event.key === "F13") &&
-      !(isAudioTesting && event.key === "F14")
+      !(currentState === "Video" && event.key === "F13") &&
+      !(currentState === "Audio" && event.key === "F14")
     )
       return
 
     lastEmittedRef.current = undefined
     const latency = event.timeStamp - lastEmitted
 
-    if (isVideoTesting) setVideoReadings((current) => [...current, latency])
-    else if (isAudioTesting)
+    if (currentState === "Video")
+      setVideoReadings((current) => [...current, latency])
+    else if (currentState === "Audio")
       setAudioReadings((current) => [...current, latency])
   }
 
@@ -77,12 +80,16 @@ export function App() {
   }
 
   const startVideoTest = useCallback(async () => {
-    if (isVideoTesting) return
+    if (currentState === "Video" || currentState === "VideoStarting") return
 
     lastEmittedRef.current = undefined
     setVideoReadings([])
     setVideoResult(undefined)
-    setIsVideoTesting(true)
+
+    setCurrentState("VideoStarting")
+    await new Promise((resolve) => setTimeout(resolve, 5000))
+
+    setCurrentState("Video")
 
     try {
       for (let i = 0; i < warmUps + sampleSize; i++) {
@@ -96,16 +103,20 @@ export function App() {
       alert(`Failed to run test: ${err}`)
     }
 
-    setIsVideoTesting(false)
-  }, [isVideoTesting])
+    setCurrentState("Idle")
+  }, [currentState])
 
   const startAudioTest = useCallback(async () => {
-    if (isAudioTesting) return
+    if (currentState === "Audio" || currentState === "AudioStarting") return
 
     lastEmittedRef.current = undefined
     setAudioReadings([])
     setAudioResult(undefined)
-    setIsAudioTesting(true)
+
+    setCurrentState("AudioStarting")
+    await new Promise((resolve) => setTimeout(resolve, 5000))
+
+    setCurrentState("Audio")
 
     try {
       for (let i = 0; i < warmUps + sampleSize; i++) {
@@ -119,8 +130,8 @@ export function App() {
       alert(`Failed to run test: ${err}`)
     }
 
-    setIsAudioTesting(false)
-  }, [isAudioTesting])
+    setCurrentState("Idle")
+  }, [currentState])
 
   async function startTest() {
     setVideoResult(undefined)
@@ -133,7 +144,7 @@ export function App() {
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [isVideoTesting, isAudioTesting])
+  }, [currentState])
 
   useEffect(() => {
     if (videoReadings.length === 0) {
@@ -162,24 +173,26 @@ export function App() {
       <div className="flex min-h-svh p-6">
         <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm">
           <div>
-            <Button
-              className="mt-2"
-              onClick={startTest}
-              disabled={isVideoTesting || isAudioTesting}
-            >
+            <Button className="mt-2" onClick={startTest}>
               Start
             </Button>
           </div>
-          {isVideoTesting && (
+          {currentState === "VideoStarting" && (
+            <div>Video test is starting! Get ready!</div>
+          )}
+          {currentState === "Video" && (
             <Progress value={videoReadings.length} max={sampleSize} />
           )}
-          {isAudioTesting && (
+          {currentState === "AudioStarting" && (
+            <div>Audio test is starting! Get ready!</div>
+          )}
+          {currentState === "Audio" && (
             <Progress value={audioReadings.length} max={sampleSize} />
           )}
-          {!isVideoTesting && videoResult && (
+          {currentState !== "Video" && videoResult && (
             <div>Video Result: {videoResult}</div>
           )}
-          {!isAudioTesting && audioResult && (
+          {currentState !== "Audio" && audioResult && (
             <div>Audio Result: {audioResult}</div>
           )}
           {videoReadings && videoReadings.length > 0 && (
