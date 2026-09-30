@@ -184,17 +184,20 @@ export function App() {
         )}
         {currentState === "Video" && (
           <Progress
-            className="h-4"
+            className="[&>[data-slot='progress-track']]:h-4"
             value={videoReadings.length}
             max={sampleSize}
           />
         )}
-        <Progress className="h-1" value={5} max={sampleSize} />
         {currentState === "AudioStarting" && (
           <div className="text-center">Audio test is starting! Get ready!</div>
         )}
         {currentState === "Audio" && (
-          <Progress value={audioReadings.length} max={sampleSize} />
+          <Progress
+            className="[&>[data-slot='progress-track']]:h-4"
+            value={audioReadings.length}
+            max={sampleSize}
+          />
         )}
         <div className="grid grid-cols-2 gap-x-2 gap-y-8">
           <div className="text-center">
