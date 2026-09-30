@@ -135,7 +135,9 @@ export function App() {
 
   async function startTest() {
     setVideoResult(undefined)
+    setVideoReadings([])
     setAudioResult(undefined)
+    setAudioReadings([])
 
     await startVideoTest()
     await startAudioTest()
@@ -170,51 +172,65 @@ export function App() {
 
   return (
     <>
-      <div className="flex min-h-svh p-6">
-        <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm">
-          <div>
-            <Button className="mt-2" onClick={startTest}>
-              Start
-            </Button>
+      <div className="mx-auto flex max-w-xl flex-col gap-4 p-6">
+        <Button className="mt-2" onClick={startTest}>
+          Start
+        </Button>
+
+        {currentState === "VideoStarting" && (
+          <div>Video test is starting! Get ready!</div>
+        )}
+        {currentState === "Video" && (
+          <Progress value={videoReadings.length} max={sampleSize} />
+        )}
+        {currentState === "AudioStarting" && (
+          <div>Audio test is starting! Get ready!</div>
+        )}
+        {currentState === "Audio" && (
+          <Progress value={audioReadings.length} max={sampleSize} />
+        )}
+        <div className="grid grid-cols-2 gap-x-2 gap-y-8">
+          <div className="text-center">
+            {currentState !== "Video" && videoResult && (
+              <>
+                <div className="text-xl">Video Latency</div>
+                <div className="text-2xl">{videoResult}</div>
+              </>
+            )}
           </div>
-          {currentState === "VideoStarting" && (
-            <div>Video test is starting! Get ready!</div>
-          )}
-          {currentState === "Video" && (
-            <Progress value={videoReadings.length} max={sampleSize} />
-          )}
-          {currentState === "AudioStarting" && (
-            <div>Audio test is starting! Get ready!</div>
-          )}
-          {currentState === "Audio" && (
-            <Progress value={audioReadings.length} max={sampleSize} />
-          )}
-          {currentState !== "Video" && videoResult && (
-            <div>Video Result: {videoResult}</div>
-          )}
-          {currentState !== "Audio" && audioResult && (
-            <div>Audio Result: {audioResult}</div>
-          )}
-          {videoReadings && videoReadings.length > 0 && (
-            <div>
-              Video readings
-              <ul>
-                {videoReadings.map((reading, index) => (
-                  <li key={index}>{reading}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {audioReadings && audioReadings.length > 0 && (
-            <div>
-              Audio readings
-              <ul>
-                {audioReadings.map((reading, index) => (
-                  <li key={index}>{reading}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <div className="text-center">
+            {currentState !== "Audio" && audioResult && (
+              <>
+                <div className="text-xl">Audio Latency</div>
+                <div className="text-2xl">{audioResult}</div>
+              </>
+            )}
+          </div>
+
+          <div className="text-center">
+            {videoReadings && videoReadings.length > 0 && (
+              <div>
+                Video readings
+                <ul className="text-sm text-foreground/80">
+                  {videoReadings.map((reading, index) => (
+                    <li key={index}>{reading.toFixed(1)}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          <div className="text-center">
+            {audioReadings && audioReadings.length > 0 && (
+              <div>
+                Audio readings
+                <ul className="text-sm text-foreground/80">
+                  {audioReadings.map((reading, index) => (
+                    <li key={index}>{reading.toFixed(1)}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
