@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Progress } from "./components/ui/progress"
 
+const secondsToMsFactor = 1000
 const samplingInterval = 1000
 const samplingIntervalJitter = 50
 const samplingDelayMs = 0
@@ -30,6 +31,8 @@ export function App() {
   const [audioResult, setAudioResult] = useState<number | undefined>(undefined)
   const [isOverlayVisible, setIsOverlayVisible] = useState<boolean>(false)
   const lastEmittedRef = useRef<number | undefined>(undefined)
+  const baseLatencyRef = useRef<number | undefined>(undefined)
+  const outputLatencyRef = useRef<number | undefined>(undefined)
 
   const handleKeyDown = (event: { key: string; timeStamp: number }) => {
     const lastEmitted = lastEmittedRef.current
@@ -51,10 +54,6 @@ export function App() {
   }
 
   const showFlash = (): number => {
-    const oscillator = audioContext.createOscillator()
-    oscillator.frequency.value = 1000
-    oscillator.connect(audioContext.destination)
-
     setTimeout(() => {
       setIsOverlayVisible(true)
     }, samplingDelayMs)
@@ -112,6 +111,8 @@ export function App() {
     lastEmittedRef.current = undefined
     setAudioReadings([])
     setAudioResult(undefined)
+    baseLatencyRef.current = undefined
+    outputLatencyRef.current = undefined
 
     setCurrentState("AudioStarting")
     await new Promise((resolve) => setTimeout(resolve, 5000))
@@ -119,6 +120,9 @@ export function App() {
     setCurrentState("Audio")
 
     try {
+      baseLatencyRef.current = audioContext.baseLatency * secondsToMsFactor
+      outputLatencyRef.current = audioContext.outputLatency * secondsToMsFactor
+
       for (let i = 0; i < warmUps + sampleSize; i++) {
         const beepTimestamp = playBeep()
 
@@ -204,7 +208,7 @@ export function App() {
             {currentState !== "Video" && videoResult && (
               <>
                 <div className="text-xl">Video Latency</div>
-                <div className="text-2xl">{videoResult}</div>
+                <div className="text-2xl">{videoResult ?? "-"}</div>
               </>
             )}
           </div>
@@ -212,7 +216,17 @@ export function App() {
             {currentState !== "Audio" && audioResult && (
               <>
                 <div className="text-xl">Audio Latency</div>
-                <div className="text-2xl">{audioResult}</div>
+                <div className="text-2xl">{audioResult ?? "-"}</div>
+
+                <div className="flex flex-col text-xs text-foreground/80">
+                  <div>
+                    Base Latency: {baseLatencyRef.current?.toFixed(0) ?? "-"}
+                  </div>
+                  <div>
+                    Output Latency:{" "}
+                    {outputLatencyRef.current?.toFixed(0) ?? "-"}
+                  </div>
+                </div>
               </>
             )}
           </div>
